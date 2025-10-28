@@ -1,0 +1,91 @@
+version: '3.9'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: subscription_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: subscription_platform
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - subscription_network
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: subscription_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass redispassword
+    volumes:
+      - redis_data:/data
+    networks:
+      - subscription_network
+
+  # Backend API
+  api:
+    build:
+      context: ./packages/api
+      dockerfile: Dockerfile
+    container_name: subscription_api
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=mongodb://admin:password@mongodb:27017/subscription_platform?authSource=admin
+      - REDIS_URL=redis://:redispassword@redis:6379
+    env_file:
+      - .env
+    volumes:
+      - ./packages/api:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - subscription_network
+    command: npm run dev
+
+  # Frontend Web App
+  web:
+    build:
+      context: ./packages/web
+      dockerfile: Dockerfile
+    container_name: subscription_web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
+    env_file:
+      - .env
+    volumes:
+      - ./packages/web:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - api
+    networks:
+      - subscription_network
+    command: npm run dev
+
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  subscription_network:
+    driver: bridge

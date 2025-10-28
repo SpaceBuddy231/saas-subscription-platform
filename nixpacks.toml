@@ -1,0 +1,12 @@
+# Nixpacks configuration for Railway
+[phases.setup]
+nixPkgs = ["nodejs-20_x"]
+
+[phases.install]
+cmds = ["cd packages/api && npm ci"]
+
+[phases.build]
+cmds = ["cd packages/api && npm run build"]
+
+[start]
+cmd = "cd packages/api && npm start"

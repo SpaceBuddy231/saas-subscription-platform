@@ -1,0 +1,366 @@
+### ========================================
+### SaaS Subscription Platform - API Tests
+### ========================================
+### Verwendung: REST Client Extension in VS Code
+### https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+###
+### Variablen anpassen:
+@baseUrl = http://localhost:4000/api
+@tenantSlug = test-company
+@accessToken = 
+@userId = 
+
+### ========================================
+### HEALTH CHECK
+### ========================================
+
+### Health Check
+GET http://localhost:4000/health
+
+### ========================================
+### AUTHENTICATION
+### ========================================
+
+### Register new user
+POST {{baseUrl}}/auth/register?tenant={{tenantSlug}}
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "SecurePass123!",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+
+### Login
+POST {{baseUrl}}/auth/login?tenant={{tenantSlug}}
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "SecurePass123!"
+}
+
+### Get Current User
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Update Profile
+PATCH {{baseUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Smith",
+  "phone": "+49 123 456789",
+  "company": "ACME Corp"
+}
+
+### Change Password
+PATCH {{baseUrl}}/auth/change-password
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+Content-Type: application/json
+
+{
+  "currentPassword": "SecurePass123!",
+  "newPassword": "NewSecurePass456!"
+}
+
+### Forgot Password
+POST {{baseUrl}}/auth/forgot-password?tenant={{tenantSlug}}
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com"
+}
+
+### Verify Email
+POST {{baseUrl}}/auth/verify-email?tenant={{tenantSlug}}
+Content-Type: application/json
+
+{
+  "token": "your-verification-token-here"
+}
+
+### Refresh Token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "your-refresh-token-here"
+}
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "your-refresh-token-here"
+}
+
+### ========================================
+### PLANS
+### ========================================
+
+### Get All Plans
+GET {{baseUrl}}/plans?tenant={{tenantSlug}}
+
+### Get Plan by ID
+GET {{baseUrl}}/plans/{{planId}}?tenant={{tenantSlug}}
+
+### Create Plan (Admin)
+POST {{baseUrl}}/plans?tenant={{tenantSlug}}
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+Content-Type: application/json
+
+{
+  "name": "Pro Plan",
+  "description": "Professional tier with advanced features",
+  "amount": 2999,
+  "currency": "EUR",
+  "interval": "month",
+  "trialDays": 14,
+  "features": [
+    {
+      "name": "Users",
+      "description": "Number of team members",
+      "included": true,
+      "limit": 10
+    },
+    {
+      "name": "Storage",
+      "description": "File storage",
+      "included": true,
+      "limit": 100,
+      "unlimited": false
+    },
+    {
+      "name": "API Access",
+      "description": "REST API access",
+      "included": true,
+      "unlimited": true
+    }
+  ]
+}
+
+### Update Plan (Admin)
+PATCH {{baseUrl}}/plans/{{planId}}?tenant={{tenantSlug}}
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+Content-Type: application/json
+
+{
+  "name": "Pro Plan (Updated)",
+  "description": "Updated description",
+  "isActive": true
+}
+
+### Archive Plan (Admin)
+DELETE {{baseUrl}}/plans/{{planId}}?tenant={{tenantSlug}}
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### ========================================
+### SUBSCRIPTIONS
+### ========================================
+
+### Get My Subscriptions
+GET {{baseUrl}}/subscriptions
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Get Subscription by ID
+GET {{baseUrl}}/subscriptions/{{subscriptionId}}
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Create Subscription
+POST {{baseUrl}}/subscriptions
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+Content-Type: application/json
+
+{
+  "planId": "{{planId}}",
+  "paymentMethodId": "pm_card_visa"
+}
+
+### Upgrade Subscription
+PATCH {{baseUrl}}/subscriptions/{{subscriptionId}}/upgrade
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+Content-Type: application/json
+
+{
+  "planId": "{{newPlanId}}",
+  "prorationBehavior": "create_prorations"
+}
+
+### Downgrade Subscription
+PATCH {{baseUrl}}/subscriptions/{{subscriptionId}}/downgrade
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+Content-Type: application/json
+
+{
+  "planId": "{{newPlanId}}"
+}
+
+### Cancel Subscription
+PATCH {{baseUrl}}/subscriptions/{{subscriptionId}}/cancel
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+Content-Type: application/json
+
+{
+  "cancelAtPeriodEnd": true,
+  "cancelReason": "Switching to another provider"
+}
+
+### Reactivate Subscription
+PATCH {{baseUrl}}/subscriptions/{{subscriptionId}}/reactivate
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Pause Subscription
+PATCH {{baseUrl}}/subscriptions/{{subscriptionId}}/pause
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+Content-Type: application/json
+
+{
+  "resumeAt": "2024-12-01T00:00:00Z"
+}
+
+### Resume Subscription
+PATCH {{baseUrl}}/subscriptions/{{subscriptionId}}/resume
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### ========================================
+### BILLING
+### ========================================
+
+### Get My Invoices
+GET {{baseUrl}}/billing/invoices?page=1&limit=10
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Get Invoice by ID
+GET {{baseUrl}}/billing/invoices/{{invoiceId}}
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Download Invoice PDF
+GET {{baseUrl}}/billing/invoices/{{invoiceId}}/download
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Get My Payments
+GET {{baseUrl}}/billing/payments?page=1&limit=10
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Get Payment Methods
+GET {{baseUrl}}/billing/payment-methods
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Add Payment Method
+POST {{baseUrl}}/billing/payment-methods
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+Content-Type: application/json
+
+{
+  "paymentMethodId": "pm_card_visa"
+}
+
+### Remove Payment Method
+DELETE {{baseUrl}}/billing/payment-methods/{{paymentMethodId}}
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Set Default Payment Method
+PATCH {{baseUrl}}/billing/payment-methods/{{paymentMethodId}}/default
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### ========================================
+### CUSTOMERS (Admin Only)
+### ========================================
+
+### Get All Customers
+GET {{baseUrl}}/customers?page=1&limit=20&search=john
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Get Customer by ID
+GET {{baseUrl}}/customers/{{customerId}}
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Get Customer Subscriptions
+GET {{baseUrl}}/customers/{{customerId}}/subscriptions
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Get Customer Invoices
+GET {{baseUrl}}/customers/{{customerId}}/invoices
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Get Customer Usage
+GET {{baseUrl}}/customers/{{customerId}}/usage
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### ========================================
+### ANALYTICS (Admin Only)
+### ========================================
+
+### Get Analytics Overview
+GET {{baseUrl}}/analytics/overview
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Get Revenue Analytics
+GET {{baseUrl}}/analytics/revenue?startDate=2024-01-01&endDate=2024-12-31&interval=month
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Get MRR
+GET {{baseUrl}}/analytics/mrr
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Get ARR
+GET {{baseUrl}}/analytics/arr
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Get Churn Rate
+GET {{baseUrl}}/analytics/churn?startDate=2024-01-01&endDate=2024-12-31
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Get LTV
+GET {{baseUrl}}/analytics/ltv
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Get Cohort Analysis
+GET {{baseUrl}}/analytics/cohorts?startDate=2024-01-01&endDate=2024-12-31
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
+
+### Get Plan Analytics
+GET {{baseUrl}}/analytics/plans
+Authorization: Bearer {{accessToken}}
+X-Tenant-ID: {{tenantSlug}}
